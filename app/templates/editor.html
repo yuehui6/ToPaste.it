@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Online Editor</title>
+    <!-- Add Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+    
+        #editor {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 50vw;       /* 等比例放大四倍宽度 */
+            height: 50vh;      /* 等比例放大四倍高度 */
+            resize: both;
+            overflow: auto;
+        }
+    
+        #buttonContainer {
+            display: flex;
+            margin-top: 15px;
+        }
+    
+        button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor" contenteditable="true"></div>
+    <div id="buttonContainer">
+        <button id="save">保存</button>
+        <button id="history">历史记录</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function handleUnload() {
+        sessionStorage.removeItem("history");
+        }
+
+        $(document).ready(function () {
+            // Save button click event
+            $("#save").click(function () {
+                const content = $("#editor").html();
+                $.post("/save", { content: content }, function (data) {
+                    alert(data.message);
+                });
+                // Save content to local history
+                saveHistory(content);
+            });
+
+            // Show history button click event
+            $("#history").click(function () {
+                // Load and display history from local storage
+                loadHistory();
+            });
+
+            // OCR functionality
+            $("#editor").on("paste", function (e) {
+                e.preventDefault();
+                const items = e.originalEvent.clipboardData.items;
+                let result = false;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            if (result) return;
+                            const img = new Image();
+                            img.src = e.target.result;
+
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            img.onload = function () {
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.drawImage(img, 0, 0);
+                                const imageUrl = canvas.toDataURL();
+
+                                const imgTag = `<img src="${imageUrl}" style="max-width: 100%;" />`;
+                                document.getElementById('editor').innerHTML += imgTag;
+
+                                const image = imageUrl.replace(
+                                  /^data:image\/(png|jpg);base64,/,
+                                  ''
+                                );
+                                $.post(
+                                  '/ocr',
+                                  { image: 'data:image/png;base64,' + image },
+                                  function (data) {
+                                    $('#editor').append(' ' + data.text);
+                                  }
+                                );
+                            };
+                            result = true;
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+                }
+            });
+
+            // Function to save history to the session storage
+            function saveHistory(content) {
+            const MAX_HISTORY_LENGTH = 10;
+            let history = JSON.parse(sessionStorage.getItem("history")) || [];
+
+            // Append new content to the history array
+            history.push(content);
+
+            // If history exceeds max length, remove the oldest item
+            if (history.length > MAX_HISTORY_LENGTH) {
+                history.shift();
+            }
+
+            // Save history back to session storage
+            sessionStorage.setItem("history", JSON.stringify(history));
+            }
+
+            // Function to load history from the session storage
+            function loadHistory() {
+            let history = JSON.parse(sessionStorage.getItem("history")) || [];
+            displayHistory(history);
+            }
+
+            // Function to display history
+            function displayHistory(history) {
+                const historyModalBody = $("#historyModal .modal-body");
+                historyModalBody.empty();
+                history.forEach(function (item) {
+                    // Properly encode the HTML content
+                    const historyItem = $("<div>").html(item).addClass("mb-4");
+                    historyModalBody.append(historyItem);
+                });
+
+                // Show the modal
+                $("#historyModal").modal("show");
+            }
+
+            handlePageRefresh();
+            $(window).on("unload", handleUnload);
+        });
+
+        function handlePageRefresh() {
+        if (localStorage.getItem("isFirstLoad") === null) {
+            localStorage.setItem("isFirstLoad", "false");
+        } else {
+            localStorage.removeItem("history");
+        }
+        }
+    </script>
+
+    <!-- Add Bootstrap JavaScript and its dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="historyModalLabel">历史记录</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+              <!-- empty div to append history dynamically -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+          </div>
+        </div>
+    </div>
+</body>
+</html>
