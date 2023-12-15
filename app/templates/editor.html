@@ -37,14 +37,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <form id="saveForm">
-        <div id="editor" contenteditable="true"></div>
-        <div id="buttonContainer">
-            <button type="submit">保存</button>
-            <button id="history">历史记录</button>
-        </div>
-    </form>
-
+    <div id="editor" contenteditable="true"></div>
+    <div id="buttonContainer">
+        <button id="save">保存</button>
+        <button id="history">历史记录</button>
+    </div>
     <script>
         function handleUnload() {
         sessionStorage.removeItem("history");
@@ -52,8 +49,7 @@
 
         $(document).ready(function () {
             // Save button click event
-            $("#saveForm").submit(function (e) {
-                e.preventDefault();
+            $("#save").click(function () {
                 const content = $("#editor").html();
                 $.post("/save", { content: content }, function (data) {
                     alert(data.message);
