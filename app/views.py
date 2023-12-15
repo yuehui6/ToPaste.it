@@ -21,7 +21,7 @@ def save():
     content = request.form["content"]
     posts = mongo.db.posts
     posts.insert_one({"content": content, "session_id": session["sid"]})
-    return jsonify(message="Saved successfully"), 200
+    return jsonify(message="保存成功"), 200
 
 @bp.route('/ocr', methods=['POST'])
 def ocr():
