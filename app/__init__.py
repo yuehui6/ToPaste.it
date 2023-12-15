@@ -4,7 +4,7 @@ from .models import mongo
 
 def create_app():
     app = Flask(__name__)
-    app.config["MONGO_URI"] = "mongodb://localhost:27017/topasteit"
+    app.config["MONGO_URI"] = "mongodb://49.232.165.6:3389/topasteit"
     app.config["SECRET_KEY"] = "supersecretkey" # 随意选择一个密钥
     app.config["SESSION_TYPE"] = "filesystem"
 
