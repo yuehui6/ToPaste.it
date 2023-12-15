@@ -8,10 +8,11 @@ def create_app():
     app.config["MONGO_URI"] = "mongodb://49.232.165.6:3389/topasteit"
     app.config["MONGO_CONNECT_TIMEOUT_MS"] = 30000
     app.config["MONGO_SOCKET_TIMEOUT_MS"] = 30000
-    app.config["SECRET_KEY"] = "0f33ea9b56824840ed1e9af74389a2ad" # 使用随机且唯一的密钥
-    # app.config["SESSION_TYPE"] = "filesystem"
+    app.config["SECRET_KEY"] = "0f33ea9b56824840ed1e9af74389a2ad"
+    app.config["SESSION_TYPE"] = "filesystem"
 
-    mongo = PyMongo(app, connect=True)
+    # 使用如下顺序实例化 PyMongo 和 Session 对象
+    mongo.init_app(app)
     Session(app)
 
     from . import views
