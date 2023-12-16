@@ -64,22 +64,71 @@
                 loadHistory();
             });
 
+            // // OCR functionality
+            // $("#editor").on("paste", function (e) {
+            //     e.preventDefault();
+            //     const items = e.originalEvent.clipboardData.items;
+            //     let result = false;
+            //     for (let i = 0; i < items.length; i++) {
+            //         if (items[i].type.indexOf('image') !== -1) {
+            //             const blob = items[i].getAsFile();
+            //             const reader = new FileReader();
+            //             reader.onload = function (e) {
+            //                 if (result) return;
+            //                 const img = new Image();
+            //                 img.src = e.target.result;
+
+            //                 const canvas = document.createElement('canvas');
+            //                 const ctx = canvas.getContext('2d');
+            //                 img.onload = function () {
+            //                     canvas.width = img.width;
+            //                     canvas.height = img.height;
+            //                     ctx.drawImage(img, 0, 0);
+            //                     const imageUrl = canvas.toDataURL();
+
+            //                     const imgTag = `<img src="${imageUrl}" style="max-width: 100%;" />`;
+            //                     document.getElementById('editor').innerHTML += imgTag;
+
+            //                     const image = imageUrl.replace(
+            //                       /^data:image\/(png|jpg);base64,/,
+            //                       ''
+            //                     );
+            //                     $.post(
+            //                       '/ocr',
+            //                       { image: 'data:image/png;base64,' + image },
+            //                       function (data) {
+            //                         $('#editor').append(' ' + data.text);
+            //                       }
+            //                     );
+            //                 };
+            //                 result = true;
+            //             };
+            //             reader.readAsDataURL(blob);
+            //         }
+            //     }
+            // });
+
             // OCR functionality
             $("#editor").on("paste", function (e) {
                 e.preventDefault();
-                const items = e.originalEvent.clipboardData.items;
-                let result = false;
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        const blob = items[i].getAsFile();
-                        const reader = new FileReader();
-                        reader.onload = function (e) {
-                            if (result) return;
-                            const img = new Image();
-                            img.src = e.target.result;
 
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
+                // 获取剪贴板数据
+                const clipboardData = e.originalEvent.clipboardData;
+                const items = clipboardData.items || [];
+                let hasImage = false;
+
+                // 处理图片粘贴
+                for (const item of items) {
+                    if (item.type.indexOf("image") !== -1) {
+                        hasImage = true;
+                        const blob = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            const img = new Image();
+                            img.src = event.target.result;
+
+                            const canvas = document.createElement("canvas");
+                            const ctx = canvas.getContext("2d");
                             img.onload = function () {
                                 canvas.width = img.width;
                                 canvas.height = img.height;
@@ -87,24 +136,29 @@
                                 const imageUrl = canvas.toDataURL();
 
                                 const imgTag = `<img src="${imageUrl}" style="max-width: 100%;" />`;
-                                document.getElementById('editor').innerHTML += imgTag;
+                                document.getElementById("editor").innerHTML += imgTag;
 
                                 const image = imageUrl.replace(
-                                  /^data:image\/(png|jpg);base64,/,
-                                  ''
+                                    /^data:image\/(png|jpg);base64,/,
+                                    ""
                                 );
                                 $.post(
-                                  '/ocr',
-                                  { image: 'data:image/png;base64,' + image },
-                                  function (data) {
-                                    $('#editor').append(' ' + data.text);
-                                  }
+                                    "/ocr",
+                                    { image: "data:image/png;base64," + image },
+                                    function (data) {
+                                        $("#editor").append(" " + data.text);
+                                    }
                                 );
                             };
-                            result = true;
                         };
                         reader.readAsDataURL(blob);
                     }
+                }
+
+                // 处理文字粘贴
+                if (!hasImage && clipboardData.getData) {
+                    const text = clipboardData.getData("text/plain");
+                    document.execCommand("insertHTML", false, text);
                 }
             });
 
