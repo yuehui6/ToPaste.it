@@ -12,8 +12,8 @@ def create_app():
     load_dotenv()
     
     app.config["MONGO_URI"] = os.getenv("MONGO_URI") # Read MONGO_URI from the environment
-    app.config["MONGO_CONNECT_TIMEOUT_MS"] = 30000
-    app.config["MONGO_SOCKET_TIMEOUT_MS"] = 30000
+    app.config["MONGO_CONNECT_TIMEOUT_MS"] = 60000
+    app.config["MONGO_SOCKET_TIMEOUT_MS"] = 60000
     app.config["SECRET_KEY"] = "0f33ea9b56824840ed1e9af74389a2ad"
     app.config["SESSION_TYPE"] = "filesystem"
 
