@@ -7,6 +7,10 @@ import os
 
 def create_app():
     app = Flask(__name__)
+    
+    # Load environment variables
+    load_dotenv()
+    
     app.config["MONGO_URI"] = os.getenv("MONGO_URI") # Read MONGO_URI from the environment
     app.config["MONGO_CONNECT_TIMEOUT_MS"] = 30000
     app.config["MONGO_SOCKET_TIMEOUT_MS"] = 30000
@@ -15,7 +19,9 @@ def create_app():
 
     # 使用如下顺序实例化 PyMongo 和 Session 对象
     mongo.init_app(app)
-    Session(app)
+    # Session(app)
+    session = Session()
+    session.init_app(app)
 
     from . import views
     app.register_blueprint(views.bp)
