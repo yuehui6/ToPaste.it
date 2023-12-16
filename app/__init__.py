@@ -2,10 +2,12 @@ from flask import Flask
 from flask_session import Session
 from .models import mongo
 from flask_pymongo import PyMongo
+from dotenv import load_dotenv
+import os
 
 def create_app():
     app = Flask(__name__)
-    app.config["MONGO_URI"] = "mongodb://49.232.165.6:3389/topasteit"
+    app.config["MONGO_URI"] = os.getenv("MONGO_URI") # Read MONGO_URI from the environment
     app.config["MONGO_CONNECT_TIMEOUT_MS"] = 30000
     app.config["MONGO_SOCKET_TIMEOUT_MS"] = 30000
     app.config["SECRET_KEY"] = "0f33ea9b56824840ed1e9af74389a2ad"
